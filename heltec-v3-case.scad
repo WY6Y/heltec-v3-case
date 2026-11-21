@@ -2,7 +2,8 @@
 // stock antenna on the SMA pigtail, standing straight up out of the lid.
 //
 // Three prints, no supports: base, tray, lid. Print in PETG or ASA (a south
-// window will soften PLA). Lid holds on with 4 x M3 x 8 self-tapping screws.
+// window will soften PLA). Lid holds on with 4 x M3 x 8 machine screws into
+// M3 x 4 x 5 mm brass heat-set inserts (CyberBin) pressed into the posts.
 //
 // Stack, bottom up: battery in the base -> tray on the wall ledges -> board
 // on the tray rails, OLED up -> lid. USB-C exits one end wall; the SMA jack
@@ -38,7 +39,9 @@ sma_flat = 0;         // kit pigtail thread looks round: plain hole, nut does th
 wall = 2;  floor_t = 2;  lid_t = 2.4;
 clr = 0.6;            // fit clearance around battery and board
 tray_t = 2;  rail_w = 1.6;     // narrow: stays outboard of the bracket screws
-screw_d = 2.6;  screw_head_d = 6;  post_d = 7;
+insert_d = 4.1;  insert_l = 4;   // M3 x 4 long x 5 OD heat-set insert; hole 4.0-4.2
+screw_clear_d = 3.2;  screw_depth = 8;   // M3 x 8 below the lid, with room to spare
+screw_head_d = 6;  post_d = 9;           // 9 mm post leaves 2.4 mm round the insert
 
 in_l = bat_l + 2 * clr + 2;                   // interior length
 in_w = max(bat_w, pcb_w) + 2 * clr;           // interior width
@@ -88,7 +91,12 @@ module base() {
             }
         }
         // screw pilots
-        for (p = posts) translate([p[0], p[1], tray_z - 1]) cylinder(d = screw_d, h = base_h);
+        for (p = posts) translate([p[0], p[1], 0]) {
+            // insert pocket (+0.5 mm for displaced plastic), lead-in chamfer, screw run-out below
+            translate([0, 0, base_h - insert_l - 0.5]) cylinder(d = insert_d, h = insert_l + 1);
+            translate([0, 0, base_h - 0.6]) cylinder(d1 = insert_d, d2 = insert_d + 1.2, h = 0.61);
+            translate([0, 0, base_h - screw_depth - 1]) cylinder(d = screw_clear_d, h = screw_depth + 2);
+        }
         // USB-C opening, generous so the plug collar fits
         // straddles the PCB so a mid-mount (or either-side) connector fits
         translate([-1, board_y0 + pcb_w / 2 - (usb_w + 3) / 2, board_z + pcb_t / 2 - (usb_h + 4.5) / 2])

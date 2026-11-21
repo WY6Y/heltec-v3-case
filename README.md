@@ -8,8 +8,10 @@ SMA jack in the lid. Built for a MeshCore repeater and observer in a window.
 
 - Outside: 72.2 x 41.2 x 33.3 mm
 - Parts: `base.stl`, `tray.stl`, `lid.stl` (the lid is exported upside down, ready to print)
-- No supports. PETG or ASA, not PLA, if it lives in a sunny window.
-- Hardware: 4 x M3 x 8 self-tapping screws, the V3's u.FL to SMA pigtail.
+- No supports. PLA is fine indoors out of direct sun; PETG or ASA for a hot sill.
+- Hardware: 4 x M3 x 4 x 5 mm brass heat-set inserts (4.1 mm holes in the posts),
+  4 x M3 x 8 machine screws, the V3's u.FL to SMA pigtail.
+- Press the inserts in flush with a soldering iron (about 220 C for PLA) before assembly.
 
 Stack, bottom up: battery on the floor, tray on the wall ledges, board on the tray
 rails with the OLED up, then the lid. USB-C exits the end wall at board level (it's a mid-mount connector).
