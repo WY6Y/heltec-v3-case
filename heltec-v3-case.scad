@@ -9,7 +9,7 @@
 // sits in the lid over the empty end of the box.
 //
 // Board numbers from Heltec's V3 dimension drawing (2026-11-21): OLED and
-// buttons on top (5 mm), USB-C on the UNDERSIDE (10.2 total - 5 - 1.6 = ~3.5),
+// buttons on top (5 mm), USB-C on top too (confirmed on the real board),
 // glass 27.28 long starting ~17.8 mm from the USB end, module 18.56 wide,
 // u.FL on top at the far end. Things still marked [check] are inferred.
 //
@@ -21,10 +21,10 @@ part = "all";          // all | base | tray | lid | preview
 bat_l = 65;   bat_w = 36;   bat_t = 10;       // 103665, from the listing
 pcb_l = 50.2; pcb_w = 25.5; pcb_t = 1.6;      // Heltec spec (pcb_t [check])
 top_h = 5.2;          // OLED module, from the drawing (5) + 0.2
-under_h = 5;          // under the PCB: USB-C body ~3.5 + battery plug [check]
+under_h = 5;          // under the PCB: battery plug [check]
 
 /* ---- features on the board, measured from the USB-C end of the PCB ---- */
-usb_w = 9.0;  usb_h = 3.5;                    // USB-C body, hangs under the PCB, centred
+usb_w = 9.0;  usb_h = 3.5;                    // USB-C body, on top of the PCB, centred
 oled_x = 19.5; oled_w = 24; oled_d = 13;     // window over the lit area (glass 17.8..45.1 from USB end)
 oled_y = 0;           // offset from the board centreline (lit area may sit ~1 mm off) [check]
 
@@ -88,7 +88,7 @@ module base() {
         // screw pilots
         for (p = posts) translate([p[0], p[1], tray_z - 1]) cylinder(d = screw_d, h = base_h);
         // USB-C opening, generous so the plug collar fits
-        translate([-1, board_y0 + pcb_w / 2 - (usb_w + 3) / 2, board_z - usb_h - 1.5])
+        translate([-1, board_y0 + pcb_w / 2 - (usb_w + 3) / 2, board_z + pcb_t - 1.5])
             cube([wall + 2, usb_w + 3, usb_h + 3]);
         // vent slots, both long walls, low and high
         for (y = [-1, out_w - wall - 1]) for (i = [0:5]) for (z = [floor_t + 3, in_top - 5])
