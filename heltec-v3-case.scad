@@ -60,6 +60,9 @@ free_x0 = board_x0 + pcb_l + 1;               // empty end of the box
 sma_x = (free_x0 + wall + in_l) / 2;
 sma_y = out_w / 2;
 post_inset = wall + post_d / 2 - 1.5;
+post_z0 = base_h - screw_depth - 2;           // round post only as deep as the screw needs
+gusset_drop = sqrt(2) * (post_inset - wall + 0.5) + post_d / 2 + 0.5;   // keeps the slope <= 45
+
 posts = [[post_inset, post_inset], [out_l - post_inset, post_inset],
          [post_inset, out_w - post_inset], [out_l - post_inset, out_w - post_inset]];
 
@@ -77,9 +80,16 @@ module base() {
                 translate([wall, wall, floor_t]) cube([in_l, in_w, base_h]);
             }
             // corner screw posts
-            for (p = posts) translate([p[0], p[1], post_tip_z]) {
-                cylinder(d1 = 0, d2 = post_d, h = post_d / 2);
-                translate([0, 0, post_d / 2]) cylinder(d = post_d, h = base_h - tray_z);
+            // Each post hangs from a gusset that grows out of the two walls at
+            // <= 45 degrees, so nothing starts in mid-air and no supports are needed.
+            for (p = posts) {
+                cx = p[0] < out_l / 2 ? wall - 0.5 : out_l - wall;
+                cy = p[1] < out_w / 2 ? wall - 0.5 : out_w - wall;
+                hull() {
+                    translate([p[0], p[1], post_z0]) cylinder(d = post_d, h = 0.01);
+                    translate([cx, cy, post_z0 - gusset_drop]) cube([0.5, 0.5, 0.01]);
+                }
+                translate([p[0], p[1], post_z0]) cylinder(d = post_d, h = base_h - post_z0);
             }
             // tray ledges on the long walls, 45 degree underside so no supports
             for (y = [wall, out_w - wall]) {
