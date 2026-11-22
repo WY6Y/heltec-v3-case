@@ -66,7 +66,7 @@ base_h = in_top;                              // base walls run to the lid
 board_x0 = post_inset + post_d / 2 + 0.4;     // USB end of the PCB
 board_y0 = wall + (in_w - pcb_w) / 2;
 free_x0 = board_x0 + pcb_l + 1;               // empty end of the box
-sma_x = wall + in_l - sma_ring_d / 2 - 0.3;   // v3: ring just clears the end wall
+sma_x = (free_x0 + wall + in_l) / 2;          // v3.2: back to v2's spot (v3's inward move hit the board)
 sma_y = out_w / 2;
 post_z0 = base_h - screw_depth - 2;           // round post only as deep as the screw needs
 gusset_drop = sqrt(2) * (post_inset - wall + 0.5) + post_d / 2 + 0.5;   // keeps the slope <= 45
@@ -200,7 +200,7 @@ module lid() {
             // the lip must clear the posts
             translate([p[0], p[1], -3]) cylinder(d = post_d + 0.8, h = 3);
         }
-        // v3: lip cut back round the SMA so the washers sit flat
+        // v3.2: gap in the end lip round the SMA so the washers/nut sit flat
         translate([sma_x, sma_y, -3]) cylinder(d = sma_ring_d, h = 3);
         // OLED window, chamfered
         translate([board_x0 + oled_x, board_y0 + pcb_w / 2 + oled_y - oled_d / 2, -1])
