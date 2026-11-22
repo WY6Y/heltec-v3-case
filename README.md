@@ -7,7 +7,8 @@ SMA jack in the lid. Built for a MeshCore repeater and observer in a window.
 ![preview](preview.png)
 
 - Outside: 72.2 x 41.2 x 34.3 mm
-- Parts: `base.stl`, `tray.stl`, `lid.stl` (the lid is exported upside down, ready to print)
+- Parts: `base.stl`, `tray.stl`, `lid.stl` (the lid is exported upside down, ready to print);
+  `plate.stl` is tray + lid on one bed. Switch variant: `base-switch.stl` + `switch-nuts.stl` (below)
 - No supports. PLA is fine indoors out of direct sun; PETG or ASA for a hot sill.
 - Hardware: 4 x M3 x 4 x 5 mm brass heat-set inserts (4.1 mm holes in the posts),
   4 x M3 x 8 machine screws, the V3's u.FL to SMA pigtail.
@@ -42,6 +43,30 @@ both ways. The lid lip has a 13 mm gap round the SMA hole, so a flat washer, sta
 and nut can sit flat under the lid (v3.2; v3 also moved the hole 2.5 mm inward,
 which hit the board, so it is back in the v2 spot). Base unchanged:
 reprint the tray and lid only (`part="plate"` puts both on one bed).
+
+## Power switch variant (optional, not yet printed)
+
+![switch variant](preview-switch.png)
+
+`base-switch.stl` (`-D sw=true`) is the same base with an SS12F15-G5 slide switch in
+the USB end wall, under the USB-C opening: a 6.6 x 3.6 mm knob slot and two 2.3 mm
+holes for M2 screws. The switch goes in the battery's red lead (cut, solder,
+heat-shrink). Its plate sits against the inside of the wall, above the battery and
+under the tray. Two printed nut blocks (`switch-nuts.stl`) go behind its ears, and M2 x 6
+screws go in from outside and cut their own thread in the blocks. Fit order: battery,
+switch + nuts, tray, board, lid. Tray and lid are unchanged.
+
+Off means off on battery. With USB plugged in, the board still runs, but the battery
+doesn't charge while the switch is off.
+
+Not yet measured from a real part: the ear hole pitch (15 mm assumed), plate length
+(20) and knob travel (3). Check them (`sw_pitch`, `sw_plate`, `sw_travel`) before printing.
+
+```
+openscad -D sw=true -D 'part="base"' -o base-switch.stl heltec-v3-case.scad
+openscad -D 'part="sw_nuts"' -o switch-nuts.stl heltec-v3-case.scad
+openscad -D sw=true -D 'part="check"' -o check.stl heltec-v3-case.scad   # adds switch vs battery/tray/nuts
+```
 
 Board dimensions come from Heltec's V3 drawing (50.2 x 25.5 mm, 10.2 mm thick,
 OLED module 5 mm; USB-C on the OLED side). Change anything in the parameters at

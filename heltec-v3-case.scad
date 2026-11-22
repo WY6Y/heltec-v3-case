@@ -23,7 +23,8 @@
 //
 // Export: openscad -D 'part="base"' -o base.stl heltec-v3-case.scad  (and tray, lid)
 
-part = "all";          // all | base | tray | lid | plate (tray + lid) | preview | check
+part = "all";          // all | base | tray | lid | plate (tray + lid) | sw_nuts | preview | check
+sw = false;            // true: power-switch variant of the base (-D sw=true)
 
 /* ---- parts we hold ---- */
 bat_l = 65;   bat_w = 36;   bat_t = 10;       // 103665, from the listing
@@ -40,6 +41,15 @@ oled_y = 0;           // offset from the board centreline (lit area may sit ~1 m
 sma_d = 6.6;          // 1/4-36 thread = 6.35 mm, plus clearance
 sma_flat = 0;         // kit pigtail thread looks round: plain hole, nut does the work
 sma_ring_d = 13;      // clear ring under the lid for washer + star washer (v2 had ~8)
+
+/* ---- optional power switch: SS12F15-G5 slide (CyberBin), in the battery's red lead ---- */
+// Listing drawing: body 10 long x 5 deep behind a 0.5 x 4.6 plate, knob 3 x 3 x 5.
+// Hole pitch, plate length, body height and travel aren't given: [check] before printing.
+sw_body = [5, 10, 4];          // depth behind the plate (x), length (y), height (z)
+sw_plate = [0.5, 20, 4.6];     // thickness, length [check], width
+sw_pitch = 15;  sw_hole = 2.3; // mounting hole pitch [check]; M2 clearance in the wall
+sw_knob = 3;  sw_knob_h = 5;  sw_travel = 3;   // travel [check]: the slot allows 3
+sw_nut = [3.5, 4, 4];          // printed nut block behind each ear: M2 x 6 from outside
 
 /* ---- shell ---- */
 wall = 2;  floor_t = 2;  lid_t = 2.4;
@@ -70,6 +80,9 @@ sma_x = (free_x0 + wall + in_l) / 2;          // v3.2: back to v2's spot (v3's i
 sma_y = out_w / 2;
 post_z0 = base_h - screw_depth - 2;           // round post only as deep as the screw needs
 gusset_drop = sqrt(2) * (post_inset - wall + 0.5) + post_d / 2 + 0.5;   // keeps the slope <= 45
+
+sw_y = out_w / 2;
+sw_z = tray_z - 0.3 - sw_plate[2] / 2;       // plate centre: just under the tray, over the battery
 
 posts = [[post_inset, post_inset], [out_l - post_inset, post_inset],
          [post_inset, out_w - post_inset], [out_l - post_inset, out_w - post_inset]];
@@ -127,6 +140,13 @@ module base() {
         // v2: 14 x 9 so a typical plug overmold reaches in past the posts to the board
         translate([-1, board_y0 + pcb_w / 2 - (usb_w + 5) / 2, board_z + pcb_t / 2 - (usb_h + 5.5) / 2])
             cube([wall + 2, usb_w + 5, usb_h + 5.5]);
+        // power switch variant: knob slot and two M2 clearance holes in the USB end wall
+        if (sw) {
+            translate([-1, sw_y - (sw_knob + sw_travel + 0.6) / 2, sw_z - (sw_knob + 0.6) / 2])
+                cube([wall + 2, sw_knob + sw_travel + 0.6, sw_knob + 0.6]);
+            for (s = [-1, 1]) translate([-1, sw_y + s * sw_pitch / 2, sw_z]) rotate([0, 90, 0])
+                cylinder(d = sw_hole, h = wall + 2, $fn = 24);
+        }
         // vent slots, both long walls, low and high
         for (y = [-1, out_w - wall - 1]) for (i = [0:5]) for (z = [floor_t + 3, in_top - 5])
             translate([12 + i * 9, y, z]) cube([4, wall + 2, 2.5]);
@@ -217,7 +237,28 @@ module lid() {
     }
 }
 
+// the switch as fitted (plate against the inside of the end wall), for preview/check
+module switch_env() {
+    translate([wall, sw_y - sw_plate[1] / 2, sw_z - sw_plate[2] / 2]) cube(sw_plate);
+    translate([wall + sw_plate[0], sw_y - sw_body[1] / 2, sw_z - sw_body[2] / 2]) cube(sw_body);
+    translate([wall + sw_plate[0] + sw_body[0], sw_y - 2.5, sw_z - 0.4]) cube([2, 5, 0.8]);   // pins
+    translate([wall + sw_plate[0] - sw_knob_h, sw_y - sw_knob / 2, sw_z - sw_knob / 2]) cube([sw_knob_h, sw_knob, sw_knob]);
+}
+// printed "nuts": a block behind each ear with an M2 pilot (screw cuts its own thread)
+module sw_nut() {
+    difference() {
+        cube(sw_nut, center = true);
+        rotate([0, 90, 0]) cylinder(d = 1.7, h = 10, center = true, $fn = 24);
+    }
+}
+module sw_nuts_fitted() {
+    for (s = [-1, 1]) translate([wall + sw_plate[0] + sw_nut[0] / 2, sw_y + s * sw_pitch / 2, sw_z]) sw_nut();
+}
+// battery envelope (103665 as listed), for check
+module battery_env() { translate([wall + clr, (out_w - bat_w) / 2, floor_t]) cube([bat_l, bat_w, bat_t]); }
+
 if (part == "base") base();
+else if (part == "sw_nuts") for (i = [0, 1]) translate([i * 8, 0, sw_nut[0] / 2]) rotate([0, 90, 0]) sw_nut();
 else if (part == "tray") translate([0, 0, -tray_z]) tray();   // on the bed for printing
 else if (part == "lid") translate([0, out_w, lid_t]) rotate([180, 0, 0]) lid();   // printed top-down
 else if (part == "check") {
@@ -228,6 +269,10 @@ else if (part == "check") {
     intersection() { base(); tray(); }
     // tray must drop in past the posts: sweep it up to the rim
     intersection() { base(); for (dz = [1:1:base_h - tray_z]) translate([0, 0, dz]) tray(); }
+    if (sw) {
+        intersection() { switch_env(); union() { base(); tray(); battery_env(); } }
+        intersection() { sw_nuts_fitted(); union() { tray(); battery_env(); switch_env(); } }
+    }
 }
 else if (part == "plate") {      // tray + lid on one bed, one print
     translate([0, 0, -tray_z]) tray();
@@ -239,6 +284,7 @@ else if (part == "preview") {
     color("#468", 0.6) translate([0, 0, in_top + 8]) lid();
     color("#c33", 0.5) translate([wall + clr, (out_w - bat_w) / 2, floor_t]) cube([bat_l, bat_w, bat_t]);
     color("#246", 0.8) translate([board_x0, board_y0, board_z]) cube([pcb_l, pcb_w, pcb_t]);
+    if (sw) { color("#222") switch_env(); color("#ca6") sw_nuts_fitted(); }
 }
 else {
     base();
