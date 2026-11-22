@@ -9,6 +9,8 @@
 // on the tray rails, OLED up -> lid. USB-C exits one end wall; the SMA jack
 // sits in the lid over the empty end of the box.
 //
+// v2 (2026-11-21): cradle tray; board moved clear of the USB-end posts.
+//
 // Board numbers from Heltec's V3 dimension drawing (2026-11-21): OLED and
 // buttons on top (5 mm). V3.2 photos: USB-C is a mid-mount, showing on both
 // faces, so its opening straddles the PCB; battery JST 1.25 is underneath at
@@ -44,6 +46,7 @@ screw_clear_d = 3.2;  screw_depth = 8;   // M3 x 8 below the lid, with room to s
 screw_head_d = 6;  post_d = 9;           // 9 mm post leaves 2.4 mm round the insert
 
 in_l = bat_l + 2 * clr + 2;                   // interior length
+post_inset = wall + post_d / 2 - 1.5;
 in_w = max(bat_w, pcb_w) + 2 * clr;           // interior width
 // Corner posts start above the battery (45 degree cone underneath, so no
 // supports) so the battery can use the full floor, corners included.
@@ -54,12 +57,13 @@ in_top = board_z + pcb_t + top_h + 0.6;       // underside of the lid
 out_l = in_l + 2 * wall;  out_w = in_w + 2 * wall;
 base_h = in_top;                              // base walls run to the lid
 
-board_x0 = wall + 0.4;                        // USB end of the PCB, tight to the wall
+// v2: the board starts past the USB-end posts (v1 had them biting its corners);
+// the USB plug reaches it through a tunnel in the end wall.
+board_x0 = post_inset + post_d / 2 + 0.4;     // USB end of the PCB
 board_y0 = wall + (in_w - pcb_w) / 2;
 free_x0 = board_x0 + pcb_l + 1;               // empty end of the box
 sma_x = (free_x0 + wall + in_l) / 2;
 sma_y = out_w / 2;
-post_inset = wall + post_d / 2 - 1.5;
 post_z0 = base_h - screw_depth - 2;           // round post only as deep as the screw needs
 gusset_drop = sqrt(2) * (post_inset - wall + 0.5) + post_d / 2 + 0.5;   // keeps the slope <= 45
 
@@ -70,6 +74,13 @@ $fn = 48;
 
 module rounded_box(l, w, h, r = 3) {
     hull() for (x = [r, l - r], y = [r, w - r]) translate([x, y, 0]) cylinder(r = r, h = h);
+}
+
+// the board and everything on it: PCB, plus the OLED module above, plus
+// 0.2 mm all round. Used by part="check".
+module board_env() {
+    translate([board_x0 - 0.2, board_y0 - 0.2, board_z - 0.2]) cube([pcb_l + 0.4, pcb_w + 0.4, pcb_t + 0.4]);
+    translate([board_x0 + 17.8, board_y0 + (pcb_w - 18.56) / 2, board_z + pcb_t]) cube([27.28, 18.56, top_h - 0.2]);
 }
 
 module base() {
@@ -109,8 +120,9 @@ module base() {
         }
         // USB-C opening, generous so the plug collar fits
         // straddles the PCB so a mid-mount (or either-side) connector fits
-        translate([-1, board_y0 + pcb_w / 2 - (usb_w + 3) / 2, board_z + pcb_t / 2 - (usb_h + 4.5) / 2])
-            cube([wall + 2, usb_w + 3, usb_h + 4.5]);
+        // v2: 14 x 9 so a typical plug overmold reaches in past the posts to the board
+        translate([-1, board_y0 + pcb_w / 2 - (usb_w + 5) / 2, board_z + pcb_t / 2 - (usb_h + 5.5) / 2])
+            cube([wall + 2, usb_w + 5, usb_h + 5.5]);
         // vent slots, both long walls, low and high
         for (y = [-1, out_w - wall - 1]) for (i = [0:5]) for (z = [floor_t + 3, in_top - 5])
             translate([12 + i * 9, y, z]) cube([4, wall + 2, 2.5]);
@@ -118,22 +130,29 @@ module base() {
 }
 
 module tray() {
-    tl = in_l - 2 * post_d + 1.6;             // clears the corner posts
+    // v2 cradle: the board drops into a pocket (side walls + far-end stop, the
+    // USB end butts the post gap) and rests on two narrow ledges. The middle is
+    // a window open at the USB end, so the battery lead comes straight up to
+    // the JST under the board. Plug the battery in first, then drop the board in.
+    tx = wall + post_d - 0.8;                 // clears the corner posts
+    tl = in_l - 2 * post_d + 1.6;
+    ty = wall + 0.3;
     tw = in_w - 0.6;
-    tx = wall + post_d - 0.8;
-    ry1 = board_y0 - wall - 0.3;              // rails, in tray coordinates
-    ry2 = ry1 + pcb_w - rail_w;
-    rx_end = board_x0 + pcb_l - 2 - tx;
-    translate([tx, wall + 0.3, tray_z]) difference() {
+    c = 0.3;  cw = 1.6;                       // pocket clearance, wall thickness
+    bx1 = board_x0 + pcb_l;                   // far end of the PCB
+    side_top = board_z + pcb_t + 1.2;
+    end_top = board_z + pcb_t + 0.6;          // low, so the u.FL lead can pass over
+    difference() {
         union() {
-            cube([tl, tw, tray_t]);
-            // rails under the long edges of the PCB, on solid plate
-            for (y = [ry1, ry2]) cube([rx_end, rail_w, tray_t + under_h]);
+            translate([tx, ty, tray_z]) cube([tl, tw, tray_t]);
+            for (y = [board_y0, board_y0 + pcb_w - rail_w])
+                translate([tx, y, tray_z]) cube([bx1 - tx, rail_w, board_z - tray_z]);
+            for (y = [board_y0 - c - cw, board_y0 + pcb_w + c])
+                translate([tx, y, tray_z]) cube([bx1 + c + cw - tx, cw, side_top - tray_z]);
+            translate([bx1 + c, board_y0 - c - cw, tray_z]) cube([cw, pcb_w + 2 * (c + cw), end_top - tray_z]);
         }
-        // cut between the rails: battery wires and air
-        translate([4, ry1 + rail_w + 1, -1]) cube([rx_end - 8, ry2 - ry1 - rail_w - 2, tray_t + 2]);
-        // open far end for the pigtail
-        translate([rx_end + 2, 4, -1]) cube([tl - rx_end - 6, tw - 8, tray_t + 2]);
+        // the window, open at the USB end
+        translate([tx - 1, board_y0 + rail_w, tray_z - 1]) cube([bx1 - 3 - tx + 1, pcb_w - 2 * rail_w, tray_t + 2]);
     }
 }
 
@@ -177,6 +196,13 @@ module lid() {
 if (part == "base") base();
 else if (part == "tray") tray();
 else if (part == "lid") translate([0, out_w, lid_t]) rotate([180, 0, 0]) lid();   // printed top-down
+else if (part == "check") {
+    // each of these must render empty
+    intersection() { base(); board_env(); }
+    intersection() { tray(); board_env(); }
+    intersection() { lid(); board_env(); }
+    intersection() { base(); tray(); }
+}
 else if (part == "preview") {
     color("#5a8") base();
     color("#ca6") tray();

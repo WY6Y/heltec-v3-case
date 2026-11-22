@@ -6,16 +6,31 @@ SMA jack in the lid. Built for a MeshCore repeater and observer in a window.
 
 ![preview](preview.png)
 
-- Outside: 72.2 x 41.2 x 33.3 mm
+- Outside: 72.2 x 41.2 x 34.3 mm
 - Parts: `base.stl`, `tray.stl`, `lid.stl` (the lid is exported upside down, ready to print)
 - No supports. PLA is fine indoors out of direct sun; PETG or ASA for a hot sill.
 - Hardware: 4 x M3 x 4 x 5 mm brass heat-set inserts (4.1 mm holes in the posts),
   4 x M3 x 8 machine screws, the V3's u.FL to SMA pigtail.
 - Press the inserts in flush with a soldering iron (about 220 C for PLA) before assembly.
 
-Stack, bottom up: battery on the floor, tray on the wall ledges, board on the tray
-rails with the OLED up, then the lid. USB-C exits the end wall at board level (it's a mid-mount connector).
-The RST and PRG buttons have no holes; lift the lid to reach them.
+Assembly:
+1. Battery flat on the floor, lead at the USB end.
+2. Tray onto the wall ledges, lead up through the tray's window.
+3. Plug the battery into the board's JST (underneath, USB end), then drop the board
+   OLED-up into the tray's pocket, USB end toward the USB opening. The pocket's side
+   walls and far-end stop keep it from sliding; the lid ribs hold it down.
+4. Pigtail jack through the lid, u.FL onto the board, lid on, 4 screws.
+
+USB-C reaches the board through a 14 x 9 mm tunnel in the end wall (the board sits
+about 8 mm in, clear of the corner posts). The RST and PRG buttons have no holes;
+lift the lid to reach them.
+
+`part="check"` renders the overlaps of board, base, tray and lid; each should be
+empty apart from the intended contacts (board on the ledges, lid ribs on its edges).
+
+v2 (2026-11-21): v1's USB-end screw posts overlapped the board corners, the tray had
+nothing to stop the board sliding, and a solid strip sat under the battery plug.
+Reprint all three parts.
 
 Board dimensions come from Heltec's V3 drawing (50.2 x 25.5 mm, 10.2 mm thick,
 OLED module 5 mm; USB-C on the OLED side). Change anything in the parameters at
