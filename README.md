@@ -32,6 +32,14 @@ v2 (2026-11-21): v1's USB-end screw posts overlapped the board corners, the tray
 nothing to stop the board sliding, and a solid strip sat under the battery plug.
 Reprint all three parts.
 
+v3 (2026-11-22): the v2 tray could walk about 1.6 mm toward the USB end and the board
+had no stop on that side, so pulling the USB-C plug dragged everything along. Two
+blocks now run from the USB end wall to the board, one on each side of the plug, and the
+plate reaches the far wall, so the tray is locked in the base and the board is stopped
+both ways. The SMA hole moved 2.5 mm inward and the lid lip is cut back in a 13 mm
+ring, so a flat washer and a star washer can sit under the lid. Base unchanged:
+reprint the tray and lid only (`part="plate"` puts both on one bed).
+
 Board dimensions come from Heltec's V3 drawing (50.2 x 25.5 mm, 10.2 mm thick,
 OLED module 5 mm; USB-C on the OLED side). Change anything in the parameters at
 the top of `heltec-v3-case.scad`, then export:
@@ -40,6 +48,7 @@ the top of `heltec-v3-case.scad`, then export:
 openscad -D 'part="base"' -o base.stl heltec-v3-case.scad
 openscad -D 'part="tray"' -o tray.stl heltec-v3-case.scad
 openscad -D 'part="lid"'  -o lid.stl  heltec-v3-case.scad
+openscad -D 'part="plate"' -o plate.stl heltec-v3-case.scad   # tray + lid together
 ```
 
 Header pins are left off (a repeater doesn't need them; soldered pins would hit the

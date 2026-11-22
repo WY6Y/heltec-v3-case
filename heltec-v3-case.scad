@@ -10,6 +10,9 @@
 // sits in the lid over the empty end of the box.
 //
 // v2 (2026-11-21): cradle tray; board moved clear of the USB-end posts.
+// v3 (2026-11-22): tray locked end to end in the base (USB-end blocks against
+// the end wall, plate out to the far wall) and USB-end board stops; SMA moved
+// in with a clear ring under the lid for the washers. Base unchanged from v2.
 //
 // Board numbers from Heltec's V3 dimension drawing (2026-11-21): OLED and
 // buttons on top (5 mm). V3.2 photos: USB-C is a mid-mount, showing on both
@@ -20,7 +23,7 @@
 //
 // Export: openscad -D 'part="base"' -o base.stl heltec-v3-case.scad  (and tray, lid)
 
-part = "all";          // all | base | tray | lid | preview
+part = "all";          // all | base | tray | lid | plate (tray + lid) | preview | check
 
 /* ---- parts we hold ---- */
 bat_l = 65;   bat_w = 36;   bat_t = 10;       // 103665, from the listing
@@ -36,6 +39,7 @@ oled_y = 0;           // offset from the board centreline (lit area may sit ~1 m
 /* ---- the SMA pigtail jack ---- */
 sma_d = 6.6;          // 1/4-36 thread = 6.35 mm, plus clearance
 sma_flat = 0;         // kit pigtail thread looks round: plain hole, nut does the work
+sma_ring_d = 13;      // clear ring under the lid for washer + star washer (v2 had ~8)
 
 /* ---- shell ---- */
 wall = 2;  floor_t = 2;  lid_t = 2.4;
@@ -62,7 +66,7 @@ base_h = in_top;                              // base walls run to the lid
 board_x0 = post_inset + post_d / 2 + 0.4;     // USB end of the PCB
 board_y0 = wall + (in_w - pcb_w) / 2;
 free_x0 = board_x0 + pcb_l + 1;               // empty end of the box
-sma_x = (free_x0 + wall + in_l) / 2;
+sma_x = wall + in_l - sma_ring_d / 2 - 0.3;   // v3: ring just clears the end wall
 sma_y = out_w / 2;
 post_z0 = base_h - screw_depth - 2;           // round post only as deep as the screw needs
 gusset_drop = sqrt(2) * (post_inset - wall + 0.5) + post_d / 2 + 0.5;   // keeps the slope <= 45
@@ -142,6 +146,9 @@ module tray() {
     bx1 = board_x0 + pcb_l;                   // far end of the PCB
     side_top = board_z + pcb_t + 1.2;
     end_top = board_z + pcb_t + 0.6;          // low, so the u.FL lead can pass over
+    usb_c = board_y0 + pcb_w / 2;  plug_w = usb_w + 5;   // matches the base's USB tunnel
+    lk_y0 = post_inset + post_d / 2 + 0.8;    // clear of the corner posts as the tray drops in
+    lk_y1 = out_w - lk_y0;
     difference() {
         union() {
             translate([tx, ty, tray_z]) cube([tl, tw, tray_t]);
@@ -149,7 +156,18 @@ module tray() {
                 translate([tx, y, tray_z]) cube([bx1 - tx, rail_w, board_z - tray_z]);
             for (y = [board_y0 - c - cw, board_y0 + pcb_w + c])
                 translate([tx, y, tray_z]) cube([bx1 + c + cw - tx, cw, side_top - tray_z]);
-            translate([bx1 + c, board_y0 - c - cw, tray_z]) cube([cw, pcb_w + 2 * (c + cw), end_top - tray_z]);
+            // far-end stop: two corner pieces, middle open for the SMA tail
+            for (y = [board_y0 - c - cw, board_y0 + pcb_w - 5])
+                translate([bx1 + c, y, tray_z]) cube([cw, 5 + c + cw, end_top - tray_z]);
+            // v3: USB-end blocks, end wall to board, either side of the plug.
+            // They stop the board and lock the tray against the end wall.
+            for (y = [lk_y0, usb_c + plug_w / 2]) {
+                w = (y == lk_y0) ? usb_c - plug_w / 2 - lk_y0 : lk_y1 - y;
+                translate([wall + 0.3, y, tray_z]) cube([board_x0 - 0.2 - wall - 0.3, w, side_top - tray_z]);
+            }
+            // v3: plate runs on to the far wall between the posts, so the tray
+            // can't walk toward the far end either
+            translate([tx, lk_y0, tray_z]) cube([wall + in_l - 0.3 - tx, lk_y1 - lk_y0, tray_t]);
         }
         // the window, open at the USB end
         translate([tx - 1, board_y0 + rail_w, tray_z - 1]) cube([bx1 - 3 - tx + 1, pcb_w - 2 * rail_w, tray_t + 2]);
@@ -178,6 +196,8 @@ module lid() {
             // the lip must clear the posts
             translate([p[0], p[1], -3]) cylinder(d = post_d + 0.8, h = 3);
         }
+        // v3: lip cut back round the SMA so the washers sit flat
+        translate([sma_x, sma_y, -3]) cylinder(d = sma_ring_d, h = 3);
         // OLED window, chamfered
         translate([board_x0 + oled_x, board_y0 + pcb_w / 2 + oled_y - oled_d / 2, -1])
             hull() {
@@ -194,7 +214,7 @@ module lid() {
 }
 
 if (part == "base") base();
-else if (part == "tray") tray();
+else if (part == "tray") translate([0, 0, -tray_z]) tray();   // on the bed for printing
 else if (part == "lid") translate([0, out_w, lid_t]) rotate([180, 0, 0]) lid();   // printed top-down
 else if (part == "check") {
     // each of these must render empty
@@ -202,6 +222,12 @@ else if (part == "check") {
     intersection() { tray(); board_env(); }
     intersection() { lid(); board_env(); }
     intersection() { base(); tray(); }
+    // tray must drop in past the posts: sweep it up to the rim
+    intersection() { base(); for (dz = [1:1:base_h - tray_z]) translate([0, 0, dz]) tray(); }
+}
+else if (part == "plate") {      // tray + lid on one bed, one print
+    translate([0, 0, -tray_z]) tray();
+    translate([0, out_w + 8, 0]) translate([0, out_w, lid_t]) rotate([180, 0, 0]) lid();
 }
 else if (part == "preview") {
     color("#5a8") base();
