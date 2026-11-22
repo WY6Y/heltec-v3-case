@@ -172,6 +172,10 @@ module tray() {
         // the window, open at the USB end
         translate([tx - 1, board_y0 + rail_w, tray_z - 1]) cube([bx1 - 3 - tx + 1, pcb_w - 2 * rail_w, tray_t + 2]);
     }
+    // v3.1: floor-level feet tie the USB-end blocks to the side rails (v3 printed
+    // them loose: they sat in the window, 0.5 mm short of the plate)
+    for (m = [0, 1]) translate([0, out_w / 2, 0]) mirror([0, m, 0]) translate([0, -out_w / 2, 0])
+        translate([board_x0 - 0.9, board_y0, tray_z]) cube([tx + 4 - board_x0 + 0.9, usb_c - plug_w / 2 - board_y0, tray_t]);
 }
 
 module lid() {
