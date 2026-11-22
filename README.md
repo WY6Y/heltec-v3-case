@@ -14,7 +14,9 @@ SMA jack in the lid. Built for a MeshCore repeater and observer in a window.
 - Press the inserts in flush with a soldering iron (about 220 C for PLA) before assembly.
 
 Assembly:
-1. Battery flat on the floor, lead at the USB end.
+1. Battery flat on the floor, lead at the USB end. It has to snap down past the
+   corner post gussets (they overhang the battery's corners on the way in); a
+   firm push does it, and it sits fine below them. Known v3 quirk.
 2. Tray onto the wall ledges, lead up through the tray's window.
 3. Plug the battery into the board's JST (underneath, USB end), then drop the board
    OLED-up into the tray's pocket, USB end toward the USB opening. The pocket's side
